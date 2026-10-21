@@ -92,11 +92,4 @@ Validation effectuée : 43 tests unitaires réussis et parcours Chrome réussi (
 ## Sources
 
 Voir [specifications.md](specifications.md) pour la correspondance des comportements, les adaptations et l’architecture ; [ATTRIBUTION.md](ATTRIBUTION.md) pour les crédits.
-
-- `source/vehicle.js` : copie intégrale de la version historique du professeur, commit `9104084`, dossier `3-Arrival_correction`. Le fichier original du projet reste intact.
-- `source/preview-comportement-6.html` : copie du fichier joint fourni pour votre version du comportement 6.
-- `js/radar.js` : extraction exacte du calcul multi-rayons de cette pièce jointe.
-- `source/provenance.json` : identifiants et empreintes SHA-256 pour vérifier les sources.
-- `vendor/p5.min.js` : p5.js 1.7.0 fourni localement avec le projet.
-
 Les dessins des avions, astéroïdes, bonus, effets et du décor sont procéduraux ; aucune ressource de ZType n’est utilisée.
