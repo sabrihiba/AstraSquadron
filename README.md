@@ -1,6 +1,6 @@
 # ASTRA · Squadron
 
-Jeu spatial à la souris, construit à partir des comportements du cours. Recrutez jusqu’à huit ailiers, esquivez les tirs et les astéroïdes, puis placez votre escadrille en protection pour chercher des soins.
+Jeu spatial à la souris, construit à partir des steering behaviors. Recrutez jusqu’à huit ailiers, esquivez les tirs et les astéroïdes, puis placez votre escadrille en protection pour chercher des soins.
 
 ## Lancer
 
