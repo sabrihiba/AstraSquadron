@@ -1,0 +1,11 @@
+{
+  "vehicle": {
+    "path": "3-Arrival_correction/vehicle.js",
+    "commit": "9104084",
+    "sha256": "9dec0aaafd0ade147511bd9121bbaecb15751198617f99e33e5d7564c882afbb"
+  },
+  "radar": {
+    "attachment": "4209b19f-8ac8-4e20-bc71-ea602ba4c247",
+    "sha256": "f4cee8006af549d50c0bc4cc18782d1a282587d2295be3820b9e4a0b666fa8f4"
+  }
+}

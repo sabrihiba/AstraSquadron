@@ -1,0 +1,8 @@
+{
+  "name": "astra-squadron",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jeu spatial pédagogique autonome — steering behaviors",
+  "scripts": { "test": "node --test tests/*.test.cjs", "start": "node server.cjs", "test:browser": "node tests/browser.cjs" },
+  "engines": { "node": ">=22" }
+}

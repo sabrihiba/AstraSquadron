@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a1726">
+  <title>Obstacle Avoidance — Radar multi-rayons</title>
+  <style>
+    :root{color-scheme:dark;--ink:#eaf4ff;--muted:#9caec0;--line:#294159;--cyan:#66dcf3;--gold:#ffd276}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#08111d;color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,"Segoe UI",sans-serif}
+    header{height:68px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 22px;border-bottom:1px solid #1e3448;background:#0d1928}.brand{display:flex;align-items:center;gap:12px}.emblem{width:39px;height:39px;border:1px solid #2f6071;border-radius:12px;background:#102b3b;display:grid;place-items:center;color:var(--cyan);font-size:20px}h1{margin:0;font-size:14px;letter-spacing:.14em}.eyebrow{color:var(--muted);font-size:10px;letter-spacing:.14em;text-transform:uppercase}.live{padding:7px 10px;border:1px solid #2d5966;border-radius:999px;background:#102835;color:#a7f2ff;font-size:10px;letter-spacing:.1em}
+    main{max-width:1700px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px}.stage{height:calc(100vh - 100px);min-height:500px;max-height:1000px;position:relative;overflow:hidden;border:1px solid #29465e;border-radius:16px;background:#081522;box-shadow:0 22px 60px #0008}canvas{width:100%;height:100%;display:block}.controls{height:max-content;max-height:calc(100vh - 100px);overflow:auto;padding:16px;border:1px solid #263f57;border-radius:16px;background:linear-gradient(155deg,#102033,#0a1624)}.controls h2{margin:0;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.intro{margin:5px 0 14px;color:var(--muted);font-size:11px}.group{padding:11px 0;border-top:1px solid #263d53}.group-title{margin-bottom:5px;color:#9bb7cf;font-size:10px;letter-spacing:.13em;text-transform:uppercase}.setting{padding:7px 0}.setting label{display:flex;justify-content:space-between;gap:8px;font-size:11px}output{color:#b3f2ff;font-weight:700;font-variant-numeric:tabular-nums}input[type=range]{width:100%;height:18px;margin:5px 0 0;accent-color:#69dcf5;cursor:pointer}.note{margin:3px 0 0;color:#8ea2b6;font-size:10px}button{font:600 11px/1.3 inherit;cursor:pointer;border:1px solid #3d6881;border-radius:9px;background:#102738;color:var(--ink);padding:9px 11px}button:hover{filter:brightness(1.15)}button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}.button-row{display:flex;gap:8px;margin:8px 0}.button-row button{flex:1}.primary{background:linear-gradient(145deg,#b1f1ff,#57bfd9);border-color:#87e7f6;color:#071521}.debug-label{display:flex;align-items:center;gap:8px;color:#d2dfec;font-size:11px;cursor:pointer}.debug-label input{accent-color:#7de7ff}.toggle{position:absolute;z-index:3;top:12px;right:12px;padding:8px 10px;background:#0b1a29e8;backdrop-filter:blur(8px)}.controls[hidden]{display:none}.stage.wide{grid-column:1/-1}.hud{position:absolute;left:13px;top:13px;display:flex;flex-wrap:wrap;gap:7px;max-width:calc(100% - 155px);pointer-events:none}.tag{padding:6px 9px;border:1px solid #26455d;border-radius:8px;background:#091725de;color:#9eb4c7;font-size:9px;letter-spacing:.08em;backdrop-filter:blur(7px)}.tag strong{font-size:11px;color:#e8f8ff}.tip{position:absolute;left:13px;bottom:12px;max-width:calc(100% - 26px);padding:8px 10px;border:1px solid #29445a;border-radius:8px;background:#091725df;color:#a7b9ca;font-size:10px;pointer-events:none}.tip strong{color:#b9efff}
+    @media(max-width:930px){main{grid-template-columns:1fr}.stage{height:62vh;min-height:390px}.controls{grid-row:2;max-height:none}.stage.wide{grid-column:auto}}@media(max-width:560px){header{height:58px;padding:8px 12px}.live{display:none}main{padding:8px;gap:8px}.stage{height:56vh;min-height:340px}.controls{padding:13px}.hud{max-width:calc(100% - 100px)}.tag{padding:5px 7px}}
+  </style>
+</head>
+<body>
+  <header><div class="brand"><div class="emblem" aria-hidden="true">⌁</div><div><h1>RADAR MULTI-RAYONS</h1><div class="eyebrow">Obstacle Avoidance · une force moyenne par rayon</div></div></div><div class="live">APERÇU INTERACTIF</div></header>
+  <main>
+    <section class="stage" id="stage" aria-label="Simulation du comportement avoidMulti">
+      <canvas id="scene" aria-label="Un véhicule teste plusieurs rayons et combine leurs forces d'évitement"></canvas>
+      <button class="toggle" id="toggle" type="button" aria-expanded="true">Masquer les réglages</button>
+      <div class="hud" aria-live="polite"><div class="tag">RAYONS <strong id="hudRays">3</strong></div><div class="tag">MENACES <strong id="hudThreats">0</strong></div><div class="tag">FORCE MOYENNE <strong id="hudForce">0.00, 0.00</strong></div></div>
+      <div class="tip"><strong>Manipulez la cible avec la souris.</strong> Cliquez dans la scène pour ajouter un obstacle. Les rayons colorés montrent leurs forces; le vert montre leur moyenne.</div>
+    </section>
+    <aside class="controls" id="controls" aria-label="Réglages de l'aperçu">
+      <h2>Laboratoire de steering</h2><p class="intro">Chaque rayon inspecte ahead, ahead2 et la position du véhicule. Les forces obtenues sont moyennées.</p>
+      <div class="group"><div class="group-title">Radar</div>
+        <div class="setting"><label for="rayCount">Nombre de rayons <output id="rayCountOut">3</output></label><input id="rayCount" type="range" min="1" max="15" step="1" value="3"><p class="note">Répartis en éventail de 120° devant le véhicule.</p></div>
+        <div class="setting"><label for="aheadFrames">Portée ahead <output id="aheadFramesOut">30 × vitesse</output></label><input id="aheadFrames" type="range" min="10" max="50" step="5" value="30"><p class="note">ahead2 vaut la moitié de ahead; la position est le troisième point testé.</p></div>
+      </div>
+      <div class="group"><div class="group-title">Commandes</div><div class="button-row"><button class="primary" id="pause" type="button">Pause</button><button id="reset" type="button">Réinitialiser</button></div><p class="note">Le véhicule cherche la cible. Cliquez pour semer un obstacle sur le parcours.</p><div style="height:10px"></div><label class="debug-label"><input id="debug" type="checkbox" checked> Afficher les rayons, ahead et ahead2</label></div>
+      <div class="group"><div class="group-title">Calcul affiché</div><p class="note">Pour chaque rayon, on repère l'obstacle le plus proche des trois points testés. Si sa distance est inférieure au rayon de l'obstacle plus la largeur de détection, une force est calculée. La moyenne de toutes les forces est retournée.</p></div>
+    </aside>
+  </main>
+  <script>
+  (() => {
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const stage = document.getElementById('stage');
+    const panel = document.getElementById('controls');
+    const ui = {
+      rayCount: document.getElementById('rayCount'),
+      aheadFrames: document.getElementById('aheadFrames'),
+      rayCountOut: document.getElementById('rayCountOut'),
+      aheadFramesOut: document.getElementById('aheadFramesOut'),
+      hudRays: document.getElementById('hudRays'),
+      hudThreats: document.getElementById('hudThreats'),
+      hudForce: document.getElementById('hudForce')
+    };
+    const colors = ['#7de7ff','#ffcf70','#f48ac7','#a9f28e','#b2a0ff','#ff9279','#67f0c1','#d8e47b'];
+    let width = 1, height = 1, dpr = 1, frame = 0, lastTime = 0, paused = false, debug = true;
+    let vehicle = { pos: { x: 0, y: 0 }, vel: { x: 2.4, y: 0.8 }, acc: { x: 0, y: 0 }, maxSpeed: 4.2, maxForce: 0.18, radius: 22, clearance: 22, path: [] };
+    let target = { x: 0, y: 0 }, obstacles = [], latestResult = { force: { x: 0, y: 0 }, rays: [] };
+
+    const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+    const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+    const mult = (v, amount) => ({ x: v.x * amount, y: v.y * amount });
+    const magnitude = v => Math.hypot(v.x, v.y);
+    const normalized = v => { const length = magnitude(v); return length > 1e-9 ? mult(v, 1 / length) : { x: 0, y: 0 }; };
+    const limit = (v, max) => { const length = magnitude(v); return length > max && length > 0 ? mult(v, max / length) : v; };
+    const setting = name => Number(ui[name].value);
+
+    function calculateMultiRayAvoidance(position, velocity, obstacleList, rayCount, clearance, maxForce, aheadFrames) {
+      const requestedCount = Number(rayCount);
+      const speed = magnitude(velocity);
+      if (!Number.isFinite(requestedCount) || requestedCount < 1 || !Number.isFinite(speed) || speed < 1e-9 || !Number.isFinite(maxForce)) {
+        return { force: { x: 0, y: 0 }, rays: [] };
+      }
+      const count = Math.max(1, Math.min(31, Math.floor(requestedCount)));
+      const heading = speed > 1e-9 ? Math.atan2(velocity.y, velocity.x) : 0;
+      const rayLength = speed * aheadFrames;
+      const spread = Math.PI * 2 / 3;
+      const rays = [];
+      let total = { x: 0, y: 0 };
+
+      for (let index = 0; index < count; index++) {
+        const ratio = count === 1 ? 0.5 : index / (count - 1);
+        const offset = (ratio - 0.5) * spread;
+        const angle = heading + offset;
+        const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+        const ahead = add(position, mult(direction, rayLength));
+        const ahead2 = add(position, mult(direction, rayLength * 0.5));
+        const samplePoints = [position, ahead2, ahead];
+        let closest = null;
+        let closestDistance = Infinity;
+        let closestPoint = null;
+
+        for (const obstacle of obstacleList) {
+          for (const sample of samplePoints) {
+            const distance = magnitude(sub(sample, obstacle.pos));
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closest = obstacle;
+              closestPoint = sample;
+            }
+          }
+        }
+
+        let force = { x: 0, y: 0 };
+        const threatened = closest !== null && closestDistance < closest.r + clearance;
+        if (threatened) {
+          let away = sub(closestPoint, closest.pos);
+          if (magnitude(away) < 1e-9) {
+            const side = offset < 0 ? -1 : 1;
+            away = { x: -direction.y * side, y: direction.x * side };
+          }
+          force = mult(normalized(away), maxForce / 2);
+          total = add(total, force);
+        }
+
+        rays.push({ angle, direction, ahead, ahead2, closest, closestPoint, closestDistance, threatened, force, color: colors[index % colors.length] });
+      }
+
+      return { force: mult(total, 1 / count), rays };
+    }
+
+    function seek(position, velocity, destination, maxSpeed, maxForce) {
+      const desired = mult(normalized(sub(destination, position)), maxSpeed);
+      return limit(sub(desired, velocity), maxForce);
+    }
+
+    function resetScene() {
+      vehicle = { pos: { x: width * 0.2, y: height * 0.54 }, vel: { x: 2.6, y: 0.7 }, acc: { x: 0, y: 0 }, maxSpeed: 4.2, maxForce: 0.18, radius: 22, clearance: 22, path: [] };
+      target = { x: width * 0.76, y: height * 0.49 };
+      const direction = normalized(vehicle.vel);
+      const ahead2 = add(vehicle.pos, mult(direction, magnitude(vehicle.vel) * 15));
+      obstacles = [
+        { pos: { x: ahead2.x, y: ahead2.y }, r: 20, color: '#e7ad55' },
+        { pos: { x: width * 0.67, y: height * 0.65 }, r: 27, color: '#75c987' },
+        { pos: { x: width * 0.39, y: height * 0.72 }, r: 22, color: '#db718a' }
+      ];
+      latestResult = calculateMultiRayAvoidance(vehicle.pos, vehicle.vel, obstacles, setting('rayCount'), vehicle.clearance, vehicle.maxForce, setting('aheadFrames'));
+    }
+
+    function resizeCanvas() {
+      const box = stage.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.max(1, box.width); height = Math.max(1, box.height);
+      canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      resetScene();
+    }
+
+    function update() {
+      const seekForce = mult(seek(vehicle.pos, vehicle.vel, target, vehicle.maxSpeed, vehicle.maxForce), 0.2);
+      latestResult = calculateMultiRayAvoidance(vehicle.pos, vehicle.vel, obstacles, setting('rayCount'), vehicle.clearance, vehicle.maxForce, setting('aheadFrames'));
+      const avoidForce = mult(latestResult.force, 3);
+      vehicle.acc = add(vehicle.acc, add(seekForce, avoidForce));
+      vehicle.vel = limit(add(vehicle.vel, vehicle.acc), vehicle.maxSpeed);
+      vehicle.pos = add(vehicle.pos, vehicle.vel);
+      vehicle.acc = { x: 0, y: 0 };
+      if (magnitude(vehicle.vel) > 0.05) vehicle.heading = Math.atan2(vehicle.vel.y, vehicle.vel.x);
+      vehicle.path.push({ ...vehicle.pos });
+      if (vehicle.path.length > 80) vehicle.path.shift();
+      const margin = 28;
+      if (vehicle.pos.x < margin || vehicle.pos.x > width - margin) vehicle.vel.x *= -0.8;
+      if (vehicle.pos.y < margin || vehicle.pos.y > height - margin) vehicle.vel.y *= -0.8;
+      vehicle.pos.x = Math.max(margin, Math.min(width - margin, vehicle.pos.x));
+      vehicle.pos.y = Math.max(margin, Math.min(height - margin, vehicle.pos.y));
+      updateHud();
+    }
+
+    function updateHud() {
+      ui.hudRays.textContent = String(setting('rayCount'));
+      ui.hudThreats.textContent = String(latestResult.rays.filter(ray => ray.threatened).length);
+      ui.hudForce.textContent = latestResult.force.x.toFixed(2) + ', ' + latestResult.force.y.toFixed(2);
+    }
+
+    function drawBackground(time) {
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, '#0d1b2b'); gradient.addColorStop(1, '#07111d');
+      ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+      ctx.save(); ctx.globalAlpha = 0.16; ctx.strokeStyle = '#47708a'; ctx.lineWidth = 1;
+      const offset = (time * 9) % 54;
+      for (let x = -offset; x < width; x += 54) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+      for (let y = 38; y < height; y += 54) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = '#19344a'; ctx.font = '10px ui-monospace,monospace'; ctx.fillText('ESPACE DE TEST · STEERING', 24, height - 24);
+    }
+
+    function drawArrow(start, vector, color, scale, widthLine = 2) {
+      const end = add(start, mult(vector, scale));
+      const angle = Math.atan2(vector.y, vector.x);
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = widthLine;
+      ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(end.x, end.y); ctx.lineTo(end.x - Math.cos(angle - 0.5) * 8, end.y - Math.sin(angle - 0.5) * 8); ctx.lineTo(end.x - Math.cos(angle + 0.5) * 8, end.y - Math.sin(angle + 0.5) * 8); ctx.closePath(); ctx.fill();
+    }
+
+    function drawRadar() {
+      if (!debug) return;
+      latestResult.rays.forEach((ray, index) => {
+        const color = ray.threatened ? '#ff806f' : ray.color;
+        const end = add(vehicle.pos, mult(ray.direction, magnitude(vehicle.vel) * setting('aheadFrames')));
+        ctx.save(); ctx.globalAlpha = ray.threatened ? 0.9 : 0.48; ctx.strokeStyle = color; ctx.lineWidth = ray.threatened ? 2.2 : 1.2; ctx.setLineDash(ray.threatened ? [] : [5, 6]);
+        ctx.beginPath(); ctx.moveTo(vehicle.pos.x, vehicle.pos.y); ctx.lineTo(end.x, end.y); ctx.stroke(); ctx.setLineDash([]);
+        for (const point of [ray.ahead2, ray.ahead]) { ctx.beginPath(); ctx.arc(point.x, point.y, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); }
+        ctx.beginPath(); ctx.arc(vehicle.pos.x, vehicle.pos.y, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+        ctx.restore();
+        if (ray.threatened) drawArrow(vehicle.pos, ray.force, color, 180, 1.6);
+      });
+      drawArrow(vehicle.pos, latestResult.force, '#a7ff8c', 450, 3.5);
+      ctx.fillStyle = '#a7ff8c'; ctx.font = 'bold 10px ui-monospace,monospace'; ctx.fillText('MOYENNE', vehicle.pos.x + latestResult.force.x * 450 + 7, vehicle.pos.y + latestResult.force.y * 450 - 7);
+    }
+
+    function drawObstacle(obstacle, index) {
+      ctx.save(); ctx.shadowColor = obstacle.color; ctx.shadowBlur = 18; ctx.fillStyle = obstacle.color; ctx.strokeStyle = '#f2f7fb'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(obstacle.pos.x, obstacle.pos.y, obstacle.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.fillStyle = '#071522'; ctx.font = 'bold 11px ui-monospace,monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('O' + (index + 1), obstacle.pos.x, obstacle.pos.y); ctx.restore();
+    }
+
+    function drawVehicle() {
+      vehicle.path.forEach((point, index) => { const alpha = index / vehicle.path.length * 0.55; ctx.fillStyle = 'rgba(111,222,255,' + alpha + ')'; ctx.beginPath(); ctx.arc(point.x, point.y, 2 + alpha * 3, 0, Math.PI * 2); ctx.fill(); });
+      ctx.save(); ctx.translate(vehicle.pos.x, vehicle.pos.y); ctx.rotate(vehicle.heading || 0); ctx.shadowColor = '#63dcf5'; ctx.shadowBlur = 19; ctx.fillStyle = '#5fd9ef'; ctx.strokeStyle = '#e9fbff'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(19, 0); ctx.lineTo(-12, -11); ctx.lineTo(-7, 0); ctx.lineTo(-12, 11); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0; ctx.fillStyle = '#123448'; ctx.beginPath(); ctx.ellipse(1, 0, 6, 4, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+
+    function drawTarget(time) {
+      ctx.save(); ctx.strokeStyle = '#f5d47a'; ctx.fillStyle = '#f5d47a'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(target.x, target.y, 24 + Math.sin(time * 3) * 2, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(target.x, target.y, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+
+    function draw(time) {
+      drawBackground(time);
+      drawTarget(time);
+      obstacles.forEach(drawObstacle);
+      drawRadar();
+      drawVehicle();
+    }
+
+    function loop(now) {
+      const dt = lastTime ? Math.min((now - lastTime) / 16.667, 2) : 1;
+      lastTime = now;
+      if (!paused) for (let step = 0; step < dt; step++) update();
+      draw(now / 1000);
+      requestAnimationFrame(loop);
+    }
+
+    ui.rayCount.addEventListener('input', () => { ui.rayCountOut.textContent = ui.rayCount.value; updateHud(); });
+    ui.aheadFrames.addEventListener('input', () => { ui.aheadFramesOut.textContent = ui.aheadFrames.value + ' × vitesse'; });
+    document.getElementById('debug').addEventListener('change', event => { debug = event.target.checked; });
+    document.getElementById('pause').addEventListener('click', event => { paused = !paused; event.currentTarget.textContent = paused ? 'Reprendre' : 'Pause'; lastTime = 0; });
+    document.getElementById('reset').addEventListener('click', () => { paused = false; document.getElementById('pause').textContent = 'Pause'; resetScene(); lastTime = 0; });
+    document.getElementById('toggle').addEventListener('click', event => { panel.hidden = !panel.hidden; stage.classList.toggle('wide', panel.hidden); event.currentTarget.textContent = panel.hidden ? 'Afficher les réglages' : 'Masquer les réglages'; event.currentTarget.setAttribute('aria-expanded', String(!panel.hidden)); requestAnimationFrame(resizeCanvas); });
+    canvas.addEventListener('pointermove', event => { const box = canvas.getBoundingClientRect(); target = { x: (event.clientX - box.left) * width / box.width, y: (event.clientY - box.top) * height / box.height }; });
+    canvas.addEventListener('pointerdown', event => { const box = canvas.getBoundingClientRect(); obstacles.push({ pos: { x: (event.clientX - box.left) * width / box.width, y: (event.clientY - box.top) * height / box.height }, r: 18 + Math.random() * 20, color: colors[Math.floor(Math.random() * colors.length)] }); });
+    window.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'd' && !/input|textarea/i.test(document.activeElement.tagName)) { debug = !debug; document.getElementById('debug').checked = debug; } });
+    new ResizeObserver(resizeCanvas).observe(stage);
+    resizeCanvas();
+    ui.rayCountOut.textContent = ui.rayCount.value;
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>

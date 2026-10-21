@@ -1,0 +1,45 @@
+﻿<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070c19"><title>ASTRA — Squadron</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/p5.min.js"></script>
+  <script defer src="source/vehicle.js"></script>
+  <script defer src="js/config.js"></script>
+  <script defer src="js/themes.js"></script>
+  <script defer src="js/radar.js"></script>
+  <script defer src="js/spacecraft.js"></script>
+  <script defer src="js/leader.js"></script><script defer src="js/ally.js"></script>
+  <script defer src="js/enemy.js"></script><script defer src="js/projectile.js"></script>
+  <script defer src="js/heavy-enemy.js"></script><script defer src="js/missile.js"></script>
+  <script defer src="js/obstacle.js"></script><script defer src="js/bonus.js"></script>
+  <script defer src="js/game.js"></script><script defer src="js/theme-scenery.js"></script><script defer src="js/renderer.js"></script>
+  <script defer src="js/audio-data.js"></script><script defer src="js/audio.js"></script>
+  <script defer src="js/sketch.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./index.html" aria-label="Astra, accueil"><span class="logo">✧</span> ASTRA <span class="brand-sub">SQUADRON</span></a>
+    <div class="sector"><i></i> ORION <span>/</span> <span id="sector-theme">ESPACE PROFOND</span></div>
+    <nav><button id="mute" aria-pressed="false" aria-label="Couper tout le son">♫ <span>Son actif</span></button><button id="help-toggle" aria-expanded="false" aria-controls="help">? <span>Aide</span></button><button id="settings-toggle" aria-expanded="false" aria-controls="settings">☷ <span>Réglages</span></button><button id="pause" aria-label="Mettre en pause">Ⅱ</button></nav>
+  </header>
+  <main>
+    <section class="mission-strip"><div><span class="eyebrow">OPÉRATION 001</span><h1>Au-delà de l’horizon<span>.</span></h1></div><p>Une escadrille. Un leader. L’espace pour seul refuge.</p><div class="telemetry"><span class="signal">▂▄▆</span> SYSTÈMES EN LIGNE</div></section>
+    <section id="stage" aria-label="Jeu spatial Astra Squadron">
+      <div id="canvas-host"></div>
+      <div class="hud"><div class="health-block"><span class="eyebrow">✧ &nbsp; LEADER / INTÉGRITÉ</span><div class="health-line"><div class="health-track"><div id="health-fill"></div></div><strong id="health">100<span>%</span></strong></div></div><div class="stats"><div><span class="eyebrow">SCORE</span><strong id="score">000000</strong></div><div><span class="eyebrow">AILIERS</span><strong id="allies">00 <small>/ 08</small></strong></div><div><span class="eyebrow">FORMATION</span><strong id="formation">↘ DELTA</strong></div></div></div>
+      <div class="stage-label"><b id="stage-theme">ESPACE PROFOND</b><span>DÉCOR SANS COLLISION · ORION EXPANSE</span></div>
+      <div class="combat-status"><div class="level-progress"><span><b id="level">NIVEAU 01</b><span id="next-threshold">PROCHAIN : 600 PTS</span></span><div class="level-track"><i id="level-fill"></i></div></div><div id="dodge-status"><kbd>S</kbd> <span id="dodge-status-text">ESQUIVE PRÊTE</span></div></div>
+      <div id="level-banner" hidden role="status"><span class="eyebrow">SECTEUR SUIVANT</span><strong id="level-banner-title"></strong><span id="level-banner-name"></span></div>
+      <div id="notice" role="status"></div>
+      <div class="stage-bottom"><span><i></i> <span id="state-label">EN ATTENTE DU PILOTE</span></span><span id="debug-label">VOL ASSISTÉ · ARRIVE + RADAR MULTI-RAYONS</span></div>
+      <div id="overlay" class="overlay"><div class="intro-card"><span class="eyebrow" id="overlay-eyebrow">L’INCONNU VOUS ATTEND</span><h2 id="overlay-title">Ne volez<br>jamais <em>seul.</em></h2><p id="overlay-copy">Prenez les commandes. Recrutez vos ailiers.<br>Ensemble, traversez les lignes ennemies.</p><button class="primary" id="start">Jouer · lancer la mission <span>↗</span></button><div class="intro-hint">SOURIS POUR PILOTER &nbsp; · &nbsp; CLIC MAINTENU POUR VISER ET TIRER</div></div></div>
+      <aside id="settings" class="panel" hidden aria-label="Réglages du jeu"><div class="panel-heading"><div><span class="eyebrow">EN DIRECT</span><h2>Réglages de vol</h2></div><button id="settings-close" aria-label="Fermer les réglages">×</button></div><p>Les paramètres s’appliquent à toute l’escadrille pendant la mission.</p><div id="sliders"></div><h3>Ambiance sonore</h3><div class="setting"><label for="music-volume">Musique <output id="music-value">38 %</output></label><input id="music-volume" type="range" min="0" max="100" value="38"></div><div class="setting"><label for="effects-volume">Effets <output id="effects-value">55 %</output></label><input id="effects-volume" type="range" min="0" max="100" value="55"></div><p id="audio-status">Le son démarre après votre premier clic sur Jouer.</p><label class="check"><input type="checkbox" id="debug"> Diagnostic des comportements <kbd>D</kbd></label><button id="defaults">Rétablir les paramètres</button></aside>
+      <aside id="help" class="panel help" hidden><div class="panel-heading"><div><span class="eyebrow">MANUEL DE VOL</span><h2>À vous les commandes.</h2></div><button id="help-close" aria-label="Fermer l’aide">×</button></div><dl><dt>Souris sans clic</dt><dd>Guider le leader</dd><dt>Clic gauche maintenu</dt><dd>Viser et tirer à 360°, suivi de la souris suspendu</dd><dt>Relâcher le clic</dt><dd>Arrêter le tir et reprendre le déplacement</dd><dt>H</dt><dd>Ailiers devant : protection</dd><dt>I</dt><dd>Ailiers derrière : formation Delta</dd><dt>S</dt><dd>Fuir un tir proche durant 0,6 s ; recharge 4 s ensuite</dd><dt>D</dt><dd>Cibles, vecteurs et radar</dd><dt>Échap</dt><dd>Pause / reprendre</dd></dl><p><b>◇ +</b> Diamant vert : +32 points de vie.<br><b>◇ ✧</b> Balise bleue : recruter un ailier.<br>Les ailiers tirent automatiquement à portée dans toutes les directions. Le réticule indique la visée ; le canon tourne vers lui. Si le curseur est exactement sur le leader, la dernière direction valide est conservée. Le radar et S restent actifs en visée. Les astéroïdes infligent des dégâts au contact.</p><p>Les seuils 600 / 1 500 / 3 000 / 5 200 / 8 000 augmentent le niveau et la difficulté. Dès le niveau 3, les grands ennemis lancent des missiles vers un repère orange annoncé 1 seconde avant le départ. Éloignez-vous de ce repère.</p><p>S utilise la fuite face au tir ennemi proche qui se rapproche de vous. Aucun danger : aucun mouvement. L’esquive ne donne aucune invulnérabilité ; les bords peuvent limiter la fuite. La souris reprend le contrôle à la fin.</p><p>Musique et effets ont des volumes séparés dans Réglages. Le bouton ♫ coupe tout le son. La musique s’arrête pendant la pause. Le radar ne garantit pas l’absence de collision : gardez de l’espace pour manœuvrer.</p></aside>
+    </section>
+    <footer><div class="shortcuts"><span><kbd>H</kbd> Protéger</span><span><kbd>I</kbd> Formation</span><span><kbd>S</kbd> Esquiver</span><span><kbd>CLIC</kbd> Viser / tirer</span><span><kbd>D</kbd> Debug</span><span><kbd>ESC</kbd> Pause</span></div><span class="footer-note">STEERING BEHAVIORS <span>×</span> SPACE ARCADE</span></footer>
+  </main>
+</body>
+</html>
+

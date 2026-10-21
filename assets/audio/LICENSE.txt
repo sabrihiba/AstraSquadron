@@ -1,0 +1,15 @@
+ASTRA Squadron — Original synthesized audio
+SPDX-License-Identifier: CC0-1.0
+
+All WAV files in this directory were synthesized specifically for ASTRA Squadron
+by the included source/generate_audio.py script, without samples, recordings,
+melodies or other audio assets from third parties.
+
+To the extent possible under law, rights in these original audio assets are
+waived under CC0 1.0 Universal. They may be used, modified, redistributed and
+published, including commercially and on GitHub, without required attribution.
+
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+
+This dedication applies only to these original audio assets and their embedded
+copy in js/audio-data.js. It does not relicense p5.js or the teaching materials.
